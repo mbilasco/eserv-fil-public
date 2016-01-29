@@ -1,0 +1,95 @@
+#!/bin/bash
+
+IF=$1
+STATUS=$2
+
+if [ "$STATUS" = "up" ]; then
+
+    url=`hostname -I`
+
+    ### ========================================================================
+    ### SET PROXY
+    ### ========================================================================
+    if [[ $url =~ 172\.19\.[0-9]{1,3}\.[0-9]{1,3} ]]; then
+        ### Définition des variables d'environnement
+        export http_proxy="cache-etu.univ-lille1.fr:3128"
+        export https_proxy="cache-etu.univ-lille1.fr:3128"
+        export ftp_proxy="cache-etu.univ-lille1.fr:3128"
+        export HTTP_proxy="cache-etu.univ-lille1.fr:3128"
+        export HTTPS_proxy="cache-etu.univ-lille1.fr:3128"
+        export FTP_PROXY="cache-etu.univ-lille1.fr:3128"
+
+        ### Définition du proxy pour APT-GET
+        echo -e "Acquire::http::Proxy \"http://cache-etu.univ-lille1.fr:3128\";\nAcquire::https::Proxy \"http://cache-etu.univ-lille1.fr:3128\";" | sudo tee /etc/apt/apt.conf.d/proxy
+
+        ### définition du proxy pour SONAR
+        sudo sed -i "s/sonar.web.javaAdditionalOpts=-Dhttps.proxyHost=cache-etu.univ-lille1.fr -Dhttps.proxyPort=3128/#sonar.web.javaAdditionalOpts=-Dhttps.proxyHost=cache-etu.univ-lille1.fr -Dhttps.proxyPort=3128/g" /opt/sonarqube-5.2/conf/sonar.properties
+        sudo sed -i "s/http.proxyHost=cache-etu.univ-lille1.fr/#http.proxyHost=cache-etu.univ-lille1.fr/g" /opt/sonarqube-5.2/conf/sonar.properties
+        sudo sed -i "s/http.proxyPort=3128/#http.proxyPort=3128/g" /opt/sonarqube-5.2/conf/sonar.properties
+
+        ### définition pour MAVEN
+        sed -i "s/<active>false<\/active>/<active>true<\/active>/g" /home/nicolas/.m2/settings.xml
+
+        ### GIT
+        git config --global http.proxy cache-etu.univ-lille1.fr:3128
+        git config --global https.proxy cache-etu.univ-lille1.fr:3128
+
+        ### NPM
+        npm config set proxy http://cache-etu.univ-lille1.fr:3128
+        npm config set https-proxy http://cache-etu.univ-lille1.fr:3128
+
+        ### BASHC pour les nouveaux terminaux
+        sed -i "s/export http_proxy=\"\"/export http_proxy=\"cache-etu.univ-lille1.fr:3128\"/g" /home/nicolas/.bashrc
+        sed -i "s/export https_proxy=\"\"/export https_proxy=\"cache-etu.univ-lille1.fr:3128\"/g" /home/nicolas/.bashrc
+        sed -i "s/export ftp_proxy=\"\"/export ftp_proxy=\"cache-etu.univ-lille1.fr:3128\"/g" /home/nicolas/.bashrc
+        sed -i "s/export HTTP_PROXY=\"\"/export HTTP_PROXY=\"cache-etu.univ-lille1.fr:3128\"/g" /home/nicolas/.bashrc
+        sed -i "s/export HTTPS_PROXY=\"\"/export HTTPS_PROXY=\"cache-etu.univ-lille1.fr:3128\"/g" /home/nicolas/.bashrc
+        sed -i "s/export FTP_PROXY=\"\"/export FTP_PROXY=\"cache-etu.univ-lille1.fr:3128\"/g" /home/nicolas/.bashrc
+
+        ### proxy.pac pour firefox
+        sed -i "s/var PROXY = \"DIRECT\"/var PROXY = \"PROXY cache-etu.univ-lille1.fr:3128\"/g" /var/www/html/proxy.pac
+
+    ### ========================================================================
+    ### UNSET PROXY
+    ### ========================================================================
+    else
+        ### variables d'environnement
+        unset http_proxy
+        unset https_proxy
+        unset ftp_proxy
+        unset HTTP_proxy
+        unset HTTPS_proxy
+        unset FTP_PROXY
+
+        ### APT-GET
+        sudo rm /etc/apt/apt.conf.d/proxy
+
+        ### SONAR
+        sudo sed -i "s/#*sonar.web.javaAdditionalOpts=-Dhttps.proxyHost=cache-etu.univ-lille1.fr -Dhttps.proxyPort=3128/sonar.web.javaAdditionalOpts=-Dhttps.proxyHost=cache-etu.univ-lille1.fr -Dhttps.proxyPort=3128/g" /opt/sonarqube-5.2/conf/sonar.properties
+        sudo sed -i "s/#*http.proxyHost=cache-etu.univ-lille1.fr/http.proxyHost=cache-etu.univ-lille1.fr/g" /opt/sonarqube-5.2/conf/sonar.properties
+        sudo sed -i "s/#*http.proxyPort=3128/http.proxyPort=3128/g" /opt/sonarqube-5.2/conf/sonar.properties
+
+        ### MAVEN
+        sed -i "s/<active>true<\/active>/<active>false<\/active>/g" /home/nicolas/.m2/settings.xml
+
+        ### GIT
+        git config --global --unset http.proxy
+        git config --global --unset https.proxy
+
+        ### NPM
+        npm config rm proxy
+        npm config rm https-proxy
+
+        ### BASHC pour les nouveaux terminaux
+        sed -i "s/export http_proxy=\"cache-etu.univ-lille1.fr:3128\"/export http_proxy=\"\"/g" /home/nicolas/.bashrc
+        sed -i "s/export https_proxy=\"cache-etu.univ-lille1.fr:3128\"/export https_proxy=\"\"/g" /home/nicolas/.bashrc
+        sed -i "s/export ftp_proxy=\"cache-etu.univ-lille1.fr:3128\"/export ftp_proxy=\"\"/g" /home/nicolas/.bashrc
+        sed -i "s/export HTTP_PROXY=\"cache-etu.univ-lille1.fr:3128\"/export HTTP_PROXY=\"\"/g" /home/nicolas/.bashrc
+        sed -i "s/export HTTPS_PROXY=\"cache-etu.univ-lille1.fr:3128\"/export HTTPS_PROXY=\"\"/g" /home/nicolas/.bashrc
+        sed -i "s/export FTP_PROXY=\"cache-etu.univ-lille1.fr:3128\"/export FTP_PROXY=\"\"/g" /home/nicolas/.bashrc
+
+        ### proxy.pac pour firefox
+        sed -i "s/var PROXY = \"PROXY cache-etu.univ-lille1.fr:3128\"/var PROXY = \"DIRECT\"/g" /var/www/html/proxy.pac
+    fi
+
+fi
