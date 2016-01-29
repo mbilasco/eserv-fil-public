@@ -15,5 +15,6 @@ Les astuces, les conseils et la description des solutions mises en place et cons
 - Utilisation des ressources informatiques
 - La messagerie
 - Configuration de votre navigateur pour l'accès à Internet 
+
 sont disponibles ici : http://intranet.fil.univ-lille1.fr/index.php/espace-etudiants
 
